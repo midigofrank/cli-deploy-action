@@ -7,6 +7,9 @@ inputs:
   secret_input:
     description: "OpenFN API KEY"
     required: true
+  config_path_input:
+    description: "OpenFN Path to Config"
+    required: true
 runs:
   using: "composite"
   steps:
@@ -18,10 +21,11 @@ runs:
         node-version: 18.x
     - run: |
         npm install -g @openfn/cli
-        openfn deploy -c config.json --no-confirm
+        openfn deploy -c $OPENFN_CONFIG_PATH --no-confirm
       shell: bash
       env: 
         OPENFN_API_KEY: ${{ inputs.secret_input }}
+        OPENFN_CONFIG_PATH: ${{ inputs.config_path_input }}
     - name: Commit updated state file
       uses: stefanzweifel/git-auto-commit-action@v4
       with: 
