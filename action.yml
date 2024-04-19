@@ -27,6 +27,6 @@ runs:
         OPENFN_API_KEY: ${{ inputs.secret_input }}
         OPENFN_CONFIG_PATH: ${{ inputs.config_path_input }}
     - name: Commit updated state file
-      uses: stefanzweifel/git-auto-commit-action@v4
+      uses: stefanzweifel/git-auto-commit-action@v5.0.1
       with: 
         commit_message: Changes accepted by Lightning; updated current project state
