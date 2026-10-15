@@ -2,14 +2,26 @@ name: 'openfn deploy'
 branding:
   icon: 'upload'
   color: 'purple'
-description: 'Deploys a yaml file to a Lightning instance'
+description: 'Deploys an OpenFn project workspace to a Lightning instance'
 inputs:
   secret_input:
     description: "OpenFN API KEY"
     required: true
-  config_path_input:
-    description: "OpenFN Path to Config"
+  project_id_input:
+    description: "OpenFN Project ID to deploy to"
     required: true
+  endpoint_input:
+    description: "Lightning URL, e.g. https://app.openfn.org. Defaults to the endpoint the workspace tracks"
+    required: false
+    default: ''
+  workspace_input:
+    description: "Folder holding the project's openfn.yaml, relative to the repo root. Defaults to the root"
+    required: false
+    default: ''
+  force_input:
+    description: "Deploy even if the project has changed in Lightning since the last sync"
+    required: false
+    default: 'false'
 runs:
   using: "composite"
   steps:
@@ -20,13 +32,26 @@ runs:
       with:
         node-version: 24.x
     - run: |
-        npm install -g @openfn/cli
-        openfn deploy -c $OPENFN_CONFIG_PATH --no-confirm
+        npm install -g @openfn/cli@latest
+
+        args=(--no-confirm)
+        if [ -n "$OPENFN_DEPLOY_ENDPOINT" ]; then
+          args+=(--endpoint "$OPENFN_DEPLOY_ENDPOINT")
+        fi
+        if [ "$OPENFN_FORCE" = "true" ]; then
+          args+=(--force)
+        fi
+        openfn project deploy "$OPENFN_PROJECT_ID" "${args[@]}"
       shell: bash
-      env: 
+      env:
         OPENFN_API_KEY: ${{ inputs.secret_input }}
-        OPENFN_CONFIG_PATH: ${{ inputs.config_path_input }}
+        OPENFN_PROJECT_ID: ${{ inputs.project_id_input }}
+        OPENFN_DEPLOY_ENDPOINT: ${{ inputs.endpoint_input }}
+        OPENFN_FORCE: ${{ inputs.force_input }}
+        OPENFN_WORKSPACE: ${{ inputs.workspace_input }}
+        # Sync relies on deploy rewriting the checkout files (.openfn/)
+        OPENFN_NO_CHECKOUT_AFTER_DEPLOY: 'false'
     - name: Commit updated state file
       uses: stefanzweifel/git-auto-commit-action@v7
-      with: 
+      with:
         commit_message: Changes accepted by Lightning; updated current project state
